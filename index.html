@@ -48,18 +48,19 @@
 
              }
 
+             my-app {
+                padding-top: 35vh;
+                position: fixed;
+                inset: 0;
+                overflow: auto;
+             }
+
 
              my-app > #app {
-                padding-top: 40vh;
                 text-align: center;
                 font-weight: bolder;
                 font-size: 1.5rem;
                 color: white;
-             }
-
-             p.log-entry {
-                margin: 0;
-                padding: 2px;
              }
 
              p.log-entry:not(:first-child) {
@@ -67,10 +68,29 @@
                 opacity: 0.6;
              }
 
-             p.log-entry.make-big {
-                font-size: 2.5rem;
+             p.log-entry.game-over {
+                font-size: 5.5rem;
+                color: yellow;
+                text-shadow: 10px 3px black;
                 padding-bottom: 100px;
              }
+
+             p.log-entry.event {
+                color: orange;
+                text-shadow: 3px 1px black;
+             }
+
+             p.log-entry.deadly-event {
+                color: red;
+                font-size: 1.15em;
+                text-shadow: 4px 2px black;
+                padding-bottom: 40px;
+             }
+
+             p.log-entry.next-turn {
+                color: hotpink;
+            }
+
 
         </style>
 

@@ -7,10 +7,16 @@ type Constructor<T> = new (...args: any[]) => T;
 export class Registry {
   #components = new Map<Constructor<any>, Map<string, any>>();
 
-  addComponent<T>(entityId: string, component: T) {
+  #addComponent<T>(entityId: string, component: T) {
     const type = component.constructor as Constructor<T>;
     if (!this.#components.has(type)) this.#components.set(type, new Map());
     this.#components.get(type)!.set(entityId, component);
+  }
+
+  addComponents(entityId: string, components: any[]) {
+    for (const component of components) {
+      this.#addComponent(entityId, component);
+    }
   }
 
   query<T extends any[]>(...types: { [K in keyof T]: Constructor<T[K]> }): T[] {
