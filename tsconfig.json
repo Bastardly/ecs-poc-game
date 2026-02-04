@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@app/*": [
+				"./src/*"
+			],
+		},
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"ES2021"
+		],
+		"target": "es6",
+		"noEmit": true,
+		"noImplicitAny": true,
+				"allowSyntheticDefaultImports": true,
+		"moduleResolution": "node",
+		"typeRoots": [
+			"./node_modules/@types",
+			"./typings/"
+		],
+	},
+	"exclude": [
+		"./node_modules/*",
+		"./.parcel-cache/*",
+		"./dist/*",
+	]
+}
