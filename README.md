@@ -5,6 +5,10 @@
 - Open http://localhost:5174/ in the browser
 - Play a very simple Asteroids-like game.
 
+## How to play
+- Use WSAD to move.
+- Use mouse to aim and shoot.
+
 # Screenshots
 <img width="1048" height="706" alt="image" src="https://github.com/user-attachments/assets/39ebb55c-9f81-4968-bf69-f9bd3091e324" />
 
