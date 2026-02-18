@@ -13,7 +13,7 @@ import { enemyAISystem } from "@app/systems/enemyAI";
 import { damageIndicatorSystem } from "@app/systems/damageIndicator";
 import { explosionSystem } from "@app/systems/explosion";
 import { renderSystem } from "@app/systems/render";
-import { getGameOverOverlay } from "@app/ui-game-overlay";
+import { getGameOverOverlay, getFpsCounter } from "@app/ui-game-overlay";
 import "@app/shaderfun2";
 
 define(
@@ -22,6 +22,10 @@ define(
     registry = new Registry();
     canvas: HTMLCanvasElement | null = null;
     gameOverOverlay: HTMLDivElement | null = null;
+    fpsCounter: HTMLDivElement | null = null;
+    fps = 0;
+    frameCount = 0;
+    fpsUpdateTime = 0;
     gameState: GameState = {
       score: 0,
       gameOver: false,
@@ -45,6 +49,19 @@ define(
         this.lastFrameTime === 0 ? 0 : timestamp - this.lastFrameTime;
       this.lastFrameTime = timestamp;
       this.gameState.elapsedTime += deltaTime;
+
+      // Update FPS counter
+      this.frameCount++;
+      if (timestamp - this.fpsUpdateTime >= 1000) {
+        this.fps = Math.round(
+          (this.frameCount * 1000) / (timestamp - this.fpsUpdateTime),
+        );
+        this.frameCount = 0;
+        this.fpsUpdateTime = timestamp;
+        if (this.fpsCounter) {
+          this.fpsCounter.textContent = `FPS: ${this.fps}`;
+        }
+      }
 
       if (!this.gameState.gameOver) {
         // Hide game over overlay if visible
@@ -205,6 +222,10 @@ define(
         this.#restartGame,
       );
       appDiv.appendChild(this.gameOverOverlay);
+
+      // Create FPS counter
+      this.fpsCounter = getFpsCounter();
+      appDiv.appendChild(this.fpsCounter);
 
       // Setup event listeners
       this.#setupEventListeners();
