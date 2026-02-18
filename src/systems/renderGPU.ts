@@ -41,13 +41,15 @@ const vertexShaderSource = `
     vec2 pos = a_position;
     
     // For triangles, adjust vertices to form a proper triangle shape
+    // Original canvas triangle: tip at (radius, 0), base at (-radius/2, ±radius/2)
     if (a_instanceShape > 0.5) {
-      // Triangle: point forward, base back
-      if (abs(pos.x + 1.0) < 0.1) {
-        // Left vertices
+      // Map quad vertices to triangle vertices
+      // Triangle points to the right: tip at (1, 0), base at (-0.5, ±0.5)
+      if (pos.x < 0.0) {
+        // Left side vertices become the base
         pos = vec2(-0.5, pos.y * 0.5);
-      } else if (abs(pos.x - 1.0) < 0.1) {
-        // Right vertex (tip)
+      } else {
+        // Right side vertices become the tip
         pos = vec2(1.0, 0.0);
       }
     }
@@ -87,7 +89,11 @@ const fragmentShaderSource = `
   }
 `;
 
-function createShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
+function createShader(
+  gl: WebGLRenderingContext,
+  type: number,
+  source: string,
+): WebGLShader | null {
   const shader = gl.createShader(type);
   if (!shader) return null;
 
@@ -95,7 +101,7 @@ function createShader(gl: WebGLRenderingContext, type: number, source: string): 
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+    console.error("Shader compile error:", gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
@@ -106,7 +112,7 @@ function createShader(gl: WebGLRenderingContext, type: number, source: string): 
 function createProgram(
   gl: WebGLRenderingContext,
   vertexShader: WebGLShader,
-  fragmentShader: WebGLShader
+  fragmentShader: WebGLShader,
 ): WebGLProgram | null {
   const program = gl.createProgram();
   if (!program) return null;
@@ -116,7 +122,7 @@ function createProgram(
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error('Program link error:', gl.getProgramInfoLog(program));
+    console.error("Program link error:", gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
     return null;
   }
@@ -149,55 +155,56 @@ export class GPURenderer {
   private overlayCtx: CanvasRenderingContext2D;
 
   constructor(canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext('webgl', { alpha: false, antialias: true });
+    const gl = canvas.getContext("webgl", { alpha: false, antialias: true });
     if (!gl) {
-      throw new Error('WebGL not supported');
+      throw new Error("WebGL not supported");
     }
     this.gl = gl;
 
     // Get instancing extension
-    this.ext = gl.getExtension('ANGLE_instanced_arrays');
+    this.ext = gl.getExtension("ANGLE_instanced_arrays");
     if (!this.ext) {
-      console.warn('Instanced rendering not supported, performance may be reduced');
+      console.warn(
+        "Instanced rendering not supported, performance may be reduced",
+      );
     }
 
     // Create shaders and program
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    const fragmentShader = createShader(
+      gl,
+      gl.FRAGMENT_SHADER,
+      fragmentShaderSource,
+    );
 
     if (!vertexShader || !fragmentShader) {
-      throw new Error('Failed to create shaders');
+      throw new Error("Failed to create shaders");
     }
 
     const program = createProgram(gl, vertexShader, fragmentShader);
     if (!program) {
-      throw new Error('Failed to create program');
+      throw new Error("Failed to create program");
     }
 
     this.program = program;
 
     // Get attribute/uniform locations
     this.locations = {
-      position: gl.getAttribLocation(program, 'a_position'),
-      instancePosition: gl.getAttribLocation(program, 'a_instancePosition'),
-      instanceRadius: gl.getAttribLocation(program, 'a_instanceRadius'),
-      instanceColor: gl.getAttribLocation(program, 'a_instanceColor'),
-      instanceOpacity: gl.getAttribLocation(program, 'a_instanceOpacity'),
-      instanceRotation: gl.getAttribLocation(program, 'a_instanceRotation'),
-      instanceShape: gl.getAttribLocation(program, 'a_instanceShape'),
-      resolution: gl.getUniformLocation(program, 'u_resolution'),
+      position: gl.getAttribLocation(program, "a_position"),
+      instancePosition: gl.getAttribLocation(program, "a_instancePosition"),
+      instanceRadius: gl.getAttribLocation(program, "a_instanceRadius"),
+      instanceColor: gl.getAttribLocation(program, "a_instanceColor"),
+      instanceOpacity: gl.getAttribLocation(program, "a_instanceOpacity"),
+      instanceRotation: gl.getAttribLocation(program, "a_instanceRotation"),
+      instanceShape: gl.getAttribLocation(program, "a_instanceShape"),
+      resolution: gl.getUniformLocation(program, "u_resolution"),
     };
 
     // Create quad buffer for circle/shape base geometry
     this.quadBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
     const quadVertices = new Float32Array([
-      -1, -1,
-       1, -1,
-      -1,  1,
-      -1,  1,
-       1, -1,
-       1,  1,
+      -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1,
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
 
@@ -214,20 +221,20 @@ export class GPURenderer {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // Create overlay canvas for text rendering
-    this.overlayCanvas = document.createElement('canvas');
+    this.overlayCanvas = document.createElement("canvas");
     this.overlayCanvas.width = canvas.width;
     this.overlayCanvas.height = canvas.height;
-    this.overlayCanvas.style.position = 'absolute';
-    this.overlayCanvas.style.pointerEvents = 'none';
-    this.overlayCanvas.style.left = canvas.offsetLeft + 'px';
-    this.overlayCanvas.style.top = canvas.offsetTop + 'px';
-    
-    const overlayCtx = this.overlayCanvas.getContext('2d');
+    this.overlayCanvas.style.position = "absolute";
+    this.overlayCanvas.style.pointerEvents = "none";
+    this.overlayCanvas.style.left = canvas.offsetLeft + "px";
+    this.overlayCanvas.style.top = canvas.offsetTop + "px";
+
+    const overlayCtx = this.overlayCanvas.getContext("2d");
     if (!overlayCtx) {
-      throw new Error('Failed to create 2D context for overlay');
+      throw new Error("Failed to create 2D context for overlay");
     }
     this.overlayCtx = overlayCtx;
-    
+
     // Append overlay canvas to parent
     if (canvas.parentElement) {
       canvas.parentElement.appendChild(this.overlayCanvas);
@@ -291,7 +298,7 @@ export class GPURenderer {
       instanceData.colors.push(color[0], color[1], color[2]);
       instanceData.opacities.push(opacity);
       instanceData.rotations.push(rotation);
-      instanceData.shapes.push(renderable.shape === 'circle' ? 0 : 1);
+      instanceData.shapes.push(renderable.shape === "circle" ? 0 : 1);
     }
 
     const instanceCount = instanceData.positions.length / 2;
@@ -308,18 +315,42 @@ export class GPURenderer {
       gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
 
       // Bind instance data
-      this.bindInstanceBuffer(this.instancePositionBuffer, this.locations.instancePosition, 
-        new Float32Array(instanceData.positions), 2);
-      this.bindInstanceBuffer(this.instanceRadiusBuffer, this.locations.instanceRadius, 
-        new Float32Array(instanceData.radii), 1);
-      this.bindInstanceBuffer(this.instanceColorBuffer, this.locations.instanceColor, 
-        new Float32Array(instanceData.colors), 3);
-      this.bindInstanceBuffer(this.instanceOpacityBuffer, this.locations.instanceOpacity, 
-        new Float32Array(instanceData.opacities), 1);
-      this.bindInstanceBuffer(this.instanceRotationBuffer, this.locations.instanceRotation, 
-        new Float32Array(instanceData.rotations), 1);
-      this.bindInstanceBuffer(this.instanceShapeBuffer, this.locations.instanceShape, 
-        new Float32Array(instanceData.shapes), 1);
+      this.bindInstanceBuffer(
+        this.instancePositionBuffer,
+        this.locations.instancePosition,
+        new Float32Array(instanceData.positions),
+        2,
+      );
+      this.bindInstanceBuffer(
+        this.instanceRadiusBuffer,
+        this.locations.instanceRadius,
+        new Float32Array(instanceData.radii),
+        1,
+      );
+      this.bindInstanceBuffer(
+        this.instanceColorBuffer,
+        this.locations.instanceColor,
+        new Float32Array(instanceData.colors),
+        3,
+      );
+      this.bindInstanceBuffer(
+        this.instanceOpacityBuffer,
+        this.locations.instanceOpacity,
+        new Float32Array(instanceData.opacities),
+        1,
+      );
+      this.bindInstanceBuffer(
+        this.instanceRotationBuffer,
+        this.locations.instanceRotation,
+        new Float32Array(instanceData.rotations),
+        1,
+      );
+      this.bindInstanceBuffer(
+        this.instanceShapeBuffer,
+        this.locations.instanceShape,
+        new Float32Array(instanceData.shapes),
+        1,
+      );
 
       // Draw instances
       if (this.ext) {
@@ -336,7 +367,12 @@ export class GPURenderer {
     this.renderOverlay(registry, canvas, gameState);
   }
 
-  private bindInstanceBuffer(buffer: WebGLBuffer, location: number, data: Float32Array, size: number) {
+  private bindInstanceBuffer(
+    buffer: WebGLBuffer,
+    location: number,
+    data: Float32Array,
+    size: number,
+  ) {
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
@@ -349,16 +385,20 @@ export class GPURenderer {
 
   private parseColor(colorString: string): [number, number, number] {
     // Parse hex color #RRGGBB
-    const hex = colorString.replace('#', '');
+    const hex = colorString.replace("#", "");
     const r = parseInt(hex.substr(0, 2), 16) / 255;
     const g = parseInt(hex.substr(2, 2), 16) / 255;
     const b = parseInt(hex.substr(4, 2), 16) / 255;
     return [r, g, b];
   }
 
-  private renderOverlay(registry: Registry, canvas: HTMLCanvasElement, gameState: GameState) {
+  private renderOverlay(
+    registry: Registry,
+    canvas: HTMLCanvasElement,
+    gameState: GameState,
+  ) {
     const ctx = this.overlayCtx;
-    
+
     // Clear overlay
     ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 

@@ -119,7 +119,8 @@ define(
         if (ship.type === "player") {
           const dx = this.inputState.mousePos.x - position.x;
           const dy = this.inputState.mousePos.y - position.y;
-          ship.rotation = Math.atan2(dy, dx);
+          // Negate dy because canvas Y increases downward but WebGL Y increases upward
+          ship.rotation = Math.atan2(-dy, dx);
           break;
         }
       }
@@ -223,7 +224,7 @@ define(
       try {
         this.gpuRenderer = createGPURenderer(this.canvas);
       } catch (error) {
-        console.error('Failed to initialize GPU renderer:', error);
+        console.error("Failed to initialize GPU renderer:", error);
         return;
       }
 
