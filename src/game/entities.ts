@@ -8,6 +8,8 @@ import {
   Bullet,
   Enemy,
   Lifespan,
+  DamageIndicator,
+  Explosion,
 } from "@app/esc/components";
 import {
   PLAYER_MAX_HEALTH,
@@ -69,6 +71,37 @@ export function createBullet(
     new Renderable("circle", "#ffff00", BULLET_RADIUS),
     new Bullet(BULLET_DAMAGE, ownerId),
     new Lifespan(BULLET_LIFESPAN),
+  ]);
+  return id;
+}
+
+export function createDamageIndicator(
+  registry: Registry,
+  x: number,
+  y: number,
+  damage: number,
+): string {
+  const id = generateEntityId();
+  registry.addComponents(id, [
+    new Position(x, y),
+    new Velocity(0, -50), // Float upward
+    new DamageIndicator(damage),
+  ]);
+  return id;
+}
+
+export function createExplosion(
+  registry: Registry,
+  x: number,
+  y: number,
+  radius: number,
+  color: string,
+): string {
+  const id = generateEntityId();
+  registry.addComponents(id, [
+    new Position(x, y),
+    new Renderable("circle", color, radius),
+    new Explosion(radius),
   ]);
   return id;
 }

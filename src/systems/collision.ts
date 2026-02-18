@@ -8,6 +8,7 @@ import {
   Renderable,
 } from "@app/esc/components";
 import { GameState, ENEMY_COLLISION_DAMAGE } from "@app/game/types";
+import { createDamageIndicator, createExplosion } from "@app/game/entities";
 
 function checkCircleCollision(
   pos1: Position,
@@ -56,11 +57,26 @@ export function collisionSystem(registry: Registry, gameState: GameState) {
         // Damage enemy
         enemyHealth.damage(bullet.damage);
 
+        // Create damage indicator
+        createDamageIndicator(
+          registry,
+          enemyPos.x,
+          enemyPos.y - enemyRenderable.radius,
+          bullet.damage,
+        );
+
         // Mark bullet for deletion
         entitiesToDelete.add(bulletId);
 
-        // If enemy is dead, mark for deletion and add score
+        // If enemy is dead, create explosion and mark for deletion
         if (!enemyHealth.isAlive()) {
+          createExplosion(
+            registry,
+            enemyPos.x,
+            enemyPos.y,
+            enemyRenderable.radius,
+            enemyRenderable.color,
+          );
           entitiesToDelete.add(enemyId);
           gameState.score += enemy.scoreValue;
         }
@@ -99,7 +115,14 @@ export function collisionSystem(registry: Registry, gameState: GameState) {
         // Damage player
         playerHealth.damage(ENEMY_COLLISION_DAMAGE);
 
-        // Kill enemy on collision
+        // Create explosion and kill enemy on collision
+        createExplosion(
+          registry,
+          enemyPos.x,
+          enemyPos.y,
+          enemyRenderable.radius,
+          enemyRenderable.color,
+        );
         entitiesToDelete.add(enemyId);
 
         // Check if player died

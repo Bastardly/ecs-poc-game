@@ -1,5 +1,12 @@
 import { Registry } from "@app/esc/registry";
-import { Position, Renderable, Ship, Health } from "@app/esc/components";
+import {
+  Position,
+  Renderable,
+  Ship,
+  Health,
+  DamageIndicator,
+  Explosion,
+} from "@app/esc/components";
 import { GameState } from "@app/game/types";
 
 export function renderSystem(
@@ -18,6 +25,18 @@ export function renderSystem(
 
   for (const [entityId, position, renderable] of entities) {
     ctx.save();
+
+    // Check if this is an explosion (needs opacity)
+    const explosions = registry.queryWithIds(Explosion, Renderable);
+    let explosionOpacity = 1;
+    for (const [expId, explosion, expRenderable] of explosions) {
+      if (expId === entityId) {
+        explosionOpacity = explosion.getOpacity();
+        break;
+      }
+    }
+
+    ctx.globalAlpha = explosionOpacity;
     ctx.fillStyle = renderable.color;
     ctx.strokeStyle = renderable.color;
 
@@ -49,6 +68,21 @@ export function renderSystem(
       ctx.fill();
     }
 
+    ctx.restore();
+  }
+
+  // Draw damage indicators
+  const damageIndicators = registry.queryWithIds(DamageIndicator, Position);
+  for (const [entityId, indicator, position] of damageIndicators) {
+    ctx.save();
+    ctx.globalAlpha = indicator.getOpacity();
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#000000";
+    ctx.font = "bold 16px monospace";
+    ctx.lineWidth = 3;
+    ctx.textAlign = "center";
+    ctx.strokeText(`-${indicator.damage}`, position.x, position.y);
+    ctx.fillText(`-${indicator.damage}`, position.x, position.y);
     ctx.restore();
   }
 

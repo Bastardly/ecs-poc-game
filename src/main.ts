@@ -10,6 +10,8 @@ import { collisionSystem } from "@app/systems/collision";
 import { lifespanSystem } from "@app/systems/lifespan";
 import { enemySpawnSystem } from "@app/systems/enemySpawner";
 import { enemyAISystem } from "@app/systems/enemyAI";
+import { damageIndicatorSystem } from "@app/systems/damageIndicator";
+import { explosionSystem } from "@app/systems/explosion";
 import { renderSystem } from "@app/systems/render";
 import "@app/shaderfun2";
 
@@ -53,6 +55,8 @@ define(
         movementSystem(this.registry, deltaTime);
         collisionSystem(this.registry, this.gameState);
         lifespanSystem(this.registry, deltaTime);
+        damageIndicatorSystem(this.registry, deltaTime);
+        explosionSystem(this.registry, deltaTime);
         enemySpawnSystem(
           this.registry,
           this.gameState,

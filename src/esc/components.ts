@@ -148,3 +148,54 @@ export class Lifespan {
     return this.remainingMs <= 0;
   }
 }
+
+// >>>>--------------------------------------------------------------------------------<<<<<
+
+export class DamageIndicator {
+  damage: number;
+  lifespan: number;
+  maxLifespan: number;
+
+  constructor(damage: number, lifespan: number = 1000) {
+    this.damage = damage;
+    this.lifespan = lifespan;
+    this.maxLifespan = lifespan;
+  }
+
+  tick(deltaMs: number): boolean {
+    this.lifespan -= deltaMs;
+    return this.lifespan <= 0;
+  }
+
+  getOpacity(): number {
+    return this.lifespan / this.maxLifespan;
+  }
+}
+
+// >>>>--------------------------------------------------------------------------------<<<<<
+
+export class Explosion {
+  startRadius: number;
+  lifespan: number;
+  maxLifespan: number;
+
+  constructor(startRadius: number, lifespan: number = 500) {
+    this.startRadius = startRadius;
+    this.lifespan = lifespan;
+    this.maxLifespan = lifespan;
+  }
+
+  tick(deltaMs: number): boolean {
+    this.lifespan -= deltaMs;
+    return this.lifespan <= 0;
+  }
+
+  getRadius(): number {
+    const progress = 1 - this.lifespan / this.maxLifespan;
+    return this.startRadius * (1 + progress * 2); // Grows to 3x size
+  }
+
+  getOpacity(): number {
+    return this.lifespan / this.maxLifespan;
+  }
+}

@@ -19,7 +19,7 @@ export const BULLET_COOLDOWN = 200; // milliseconds
 export const BULLET_DAMAGE = 25;
 
 export const ENEMY_SPEED = 80; // pixels per second
-export const ENEMY_HEALTH = 25;
+export const ENEMY_HEALTH = 125; // 5 hits with 25 damage bullets
 export const ENEMY_SCORE_VALUE = 10;
 export const ENEMY_SPAWN_INTERVAL = 2000; // milliseconds (decreases over time)
 export const ENEMY_COLLISION_DAMAGE = 20;
