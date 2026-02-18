@@ -1,6 +1,5 @@
 import { Registry } from "@app/esc/registry";
-import { Position, Velocity, Ship } from "@app/esc/components";
-import { GameState, ENEMY_SPAWN_INTERVAL, ENEMY_SPEED } from "@app/game/types";
+import { GameState, ENEMY_SPAWN_INTERVAL } from "@app/game/types";
 import { createEnemy } from "@app/game/entities";
 
 let lastSpawnTime = 0;
@@ -50,22 +49,7 @@ export function enemySpawnSystem(
     }
 
     // Create enemy at edge
-    const enemyId = createEnemy(registry, x, y);
-
-    // Set velocity toward center of canvas
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
-    const dx = centerX - x;
-    const dy = centerY - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    const entities = registry.queryWithIds(Position, Velocity);
-    for (const [id, position, velocity] of entities) {
-      if (id === enemyId) {
-        velocity.dx = (dx / distance) * ENEMY_SPEED;
-        velocity.dy = (dy / distance) * ENEMY_SPEED;
-        break;
-      }
-    }
+    // Velocity will be set by enemyAISystem to track the player
+    createEnemy(registry, x, y);
   }
 }

@@ -9,6 +9,7 @@ import { movementSystem } from "@app/systems/movement";
 import { collisionSystem } from "@app/systems/collision";
 import { lifespanSystem } from "@app/systems/lifespan";
 import { enemySpawnSystem } from "@app/systems/enemySpawner";
+import { enemyAISystem } from "@app/systems/enemyAI";
 import { renderSystem } from "@app/systems/render";
 import "@app/shaderfun2";
 
@@ -48,6 +49,7 @@ define(
         // Run all systems
         inputSystem(this.registry, this.inputState);
         shootingSystem(this.registry, this.inputState, timestamp);
+        enemyAISystem(this.registry);
         movementSystem(this.registry, deltaTime);
         collisionSystem(this.registry, this.gameState);
         lifespanSystem(this.registry, deltaTime);
@@ -141,8 +143,8 @@ define(
       if (!appDiv) return;
 
       this.canvas = document.createElement("canvas");
-      this.canvas.width = 800;
-      this.canvas.height = 600;
+      this.canvas.width = window.innerWidth * 0.8;
+      this.canvas.height = window.innerHeight * 0.8;
       this.canvas.style.border = "2px solid #333";
       this.canvas.style.backgroundColor = "#000";
       this.canvas.style.cursor = "crosshair";
