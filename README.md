@@ -1,9 +1,12 @@
-# Getting started
+# About
+Just a small POC game using homemade ECS architecture in TypeScript inspired by ECS from the Bevy Game Engine.
+It's a very simple Asteroids-like game.
+
+## Getting started
 - git clone
 - npm install
 - npm run dev
 - Open http://localhost:5174/ in the browser
-- Play a very simple Asteroids-like game.
 
 ## How to play
 - Use WSAD to move.
