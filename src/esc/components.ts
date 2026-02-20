@@ -45,16 +45,17 @@ export class Ship {
 
 // >>>>--------------------------------------------------------------------------------<<<<<
 
-// Todo: replace with sprites.
 export class Renderable {
-  shape: "circle" | "triangle";
+  shape: "circle" | "sprite";
   color: string;
   radius: number;
+  textureName?: string;
 
-  constructor(shape: "circle" | "triangle", color: string, radius: number) {
+  constructor(shape: "circle" | "sprite", color: string, radius: number, textureName?: string) {
     this.shape = shape;
     this.color = color;
     this.radius = radius;
+    this.textureName = textureName;
   }
 }
 

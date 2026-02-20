@@ -11,6 +11,6 @@ export const ENEMY_SPAWN_INTERVAL = 2000; // milliseconds (decreases over time)
 export const ENEMY_COLLISION_DAMAGE = 10;
 
 export const PLAYER_MAX_HEALTH = 100;
-export const PLAYER_RADIUS = 15;
+export const PLAYER_RADIUS = 24;
 export const BULLET_RADIUS = 3;
 export const ENEMY_RADIUS = 12;

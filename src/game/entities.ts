@@ -35,7 +35,7 @@ export function createPlayer(registry: Registry, x: number, y: number): string {
     new Position(x, y),
     new Velocity(0, 0),
     new Ship("player", 0),
-    new Renderable("triangle", "#00ff00", PLAYER_RADIUS),
+    new Renderable("sprite", "#ffffff", PLAYER_RADIUS, "player"),
     new Health(PLAYER_MAX_HEALTH, PLAYER_MAX_HEALTH),
   ]);
   return id;

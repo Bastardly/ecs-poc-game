@@ -17,7 +17,7 @@ const vertexShaderSource = `
   attribute vec3 a_instanceColor;
   attribute float a_instanceOpacity;
   attribute float a_instanceRotation;
-  attribute float a_instanceShape; // 0 = circle, 1 = triangle
+  attribute float a_instanceShape; // 0 = circle, 1 = sprite
 
   uniform vec2 u_resolution;
 
@@ -39,20 +39,6 @@ const vertexShaderSource = `
     v_uv = a_position;
 
     vec2 pos = a_position;
-    
-    // For triangles, adjust vertices to form a proper triangle shape
-    // Original canvas triangle: tip at (radius, 0), base at (-radius/2, ±radius/2)
-    if (a_instanceShape > 0.5) {
-      // Map quad vertices to triangle vertices
-      // Triangle points to the right: tip at (1, 0), base at (-0.5, ±0.5)
-      if (pos.x < 0.0) {
-        // Left side vertices become the base
-        pos = vec2(-0.5, pos.y * 0.5);
-      } else {
-        // Right side vertices become the tip
-        pos = vec2(1.0, 0.0);
-      }
-    }
 
     // Apply rotation and scale
     vec2 rotated = rotate2d(a_instanceRotation) * (pos * a_instanceRadius);
@@ -73,6 +59,8 @@ const fragmentShaderSource = `
   varying vec2 v_uv;
   varying float v_shape;
 
+  uniform sampler2D u_texture;
+
   void main() {
     float alpha = v_opacity;
 
@@ -82,10 +70,15 @@ const fragmentShaderSource = `
       if (dist > 1.0) {
         discard;
       }
+      gl_FragColor = vec4(v_color, alpha);
+    } else {
+      // Sprite (texture)
+      // Convert from [-1, 1] to [0, 1] texture coordinates
+      vec2 texCoord = (v_uv + 1.0) * 0.5;
+      vec4 texColor = texture2D(u_texture, texCoord);
+      // Apply opacity
+      gl_FragColor = vec4(texColor.rgb, texColor.a * alpha);
     }
-    // Triangle rendering happens automatically via vertex positions
-
-    gl_FragColor = vec4(v_color, alpha);
   }
 `;
 
@@ -142,6 +135,7 @@ export class GPURenderer {
     instanceRotation: number;
     instanceShape: number;
     resolution: WebGLUniformLocation | null;
+    texture: WebGLUniformLocation | null;
   };
   private quadBuffer: WebGLBuffer;
   private instancePositionBuffer: WebGLBuffer;
@@ -153,6 +147,7 @@ export class GPURenderer {
   private ext: ANGLE_instanced_arrays | null;
   private overlayCanvas: HTMLCanvasElement;
   private overlayCtx: CanvasRenderingContext2D;
+  private textures: Map<string, WebGLTexture>;
 
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl", { alpha: false, antialias: true });
@@ -198,6 +193,7 @@ export class GPURenderer {
       instanceRotation: gl.getAttribLocation(program, "a_instanceRotation"),
       instanceShape: gl.getAttribLocation(program, "a_instanceShape"),
       resolution: gl.getUniformLocation(program, "u_resolution"),
+      texture: gl.getUniformLocation(program, "u_texture"),
     };
 
     // Create quad buffer for circle/shape base geometry
@@ -239,6 +235,53 @@ export class GPURenderer {
     if (canvas.parentElement) {
       canvas.parentElement.appendChild(this.overlayCanvas);
     }
+
+    // Initialize textures
+    this.textures = new Map();
+    this.loadTexture("player", "/player.png");
+  }
+
+  private loadTexture(name: string, url: string) {
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    if (!texture) {
+      console.error(`Failed to create texture: ${name}`);
+      return;
+    }
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    
+    // Set a 1x1 white pixel as placeholder while loading
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([255, 255, 255, 255])
+    );
+
+    this.textures.set(name, texture);
+
+    // Load the actual image
+    const image = new Image();
+    image.onload = () => {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      
+      // Set texture parameters
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    };
+    image.onerror = () => {
+      console.error(`Failed to load texture: ${url}`);
+    };
+    image.src = url;
   }
 
   render(registry: Registry, canvas: HTMLCanvasElement, gameState: GameState) {
@@ -298,7 +341,10 @@ export class GPURenderer {
       instanceData.colors.push(color[0], color[1], color[2]);
       instanceData.opacities.push(opacity);
       instanceData.rotations.push(rotation);
-      instanceData.shapes.push(renderable.shape === "circle" ? 0 : 1);
+      
+      // Map shape to numeric value: circle = 0, sprite = 1
+      const shapeValue = renderable.shape === "sprite" ? 1 : 0;
+      instanceData.shapes.push(shapeValue);
     }
 
     const instanceCount = instanceData.positions.length / 2;
@@ -308,6 +354,14 @@ export class GPURenderer {
 
       // Set uniforms
       gl.uniform2f(this.locations.resolution, canvas.width, canvas.height);
+
+      // Bind player texture
+      const playerTexture = this.textures.get("player");
+      if (playerTexture) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, playerTexture);
+        gl.uniform1i(this.locations.texture, 0);
+      }
 
       // Bind quad vertices
       gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);

@@ -120,7 +120,8 @@ define(
           const dx = this.inputState.mousePos.x - position.x;
           const dy = this.inputState.mousePos.y - position.y;
           // Negate dy because canvas Y increases downward but WebGL Y increases upward
-          ship.rotation = Math.atan2(-dy, dx);
+          // Add π/2 offset because sprite is facing down (6 o'clock) instead of right (3 o'clock)
+          ship.rotation = Math.atan2(-dy, dx) + Math.PI / 2;
           break;
         }
       }
