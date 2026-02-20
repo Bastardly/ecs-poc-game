@@ -16,10 +16,10 @@ export function enemyAISystem(registry: Registry) {
 
   if (!playerPos) return; // No player found
 
-  // Update all enemy velocities to move toward player
-  const enemies = registry.query(Enemy, Position, Velocity);
+  // Update all enemy velocities and rotation to move toward player
+  const enemies = registry.query(Enemy, Position, Velocity, Ship);
 
-  for (const [enemy, enemyPos, enemyVel] of enemies) {
+  for (const [enemy, enemyPos, enemyVel, ship] of enemies) {
     const dx = playerPos.x - enemyPos.x;
     const dy = playerPos.y - enemyPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -28,6 +28,10 @@ export function enemyAISystem(registry: Registry) {
       // Normalize and apply speed
       enemyVel.dx = (dx / distance) * ENEMY_SPEED;
       enemyVel.dy = (dy / distance) * ENEMY_SPEED;
+      
+      // Set rotation to face player
+      // Negate dy for coordinate system, add π/2 for sprite facing down
+      ship.rotation = Math.atan2(-dy, dx) + Math.PI / 2;
     }
   }
 }

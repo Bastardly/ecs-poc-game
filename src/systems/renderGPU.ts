@@ -239,6 +239,7 @@ export class GPURenderer {
     // Initialize textures
     this.textures = new Map();
     this.loadTexture("player", "/player.png");
+    this.loadTexture("enemy", "/enemy.png");
   }
 
   private loadTexture(name: string, url: string) {
@@ -297,76 +298,90 @@ export class GPURenderer {
     const explosions = registry.queryWithIds(Explosion, Renderable);
     const shipEntities = registry.queryWithIds(Ship, Position);
 
-    const instanceData: {
-      positions: number[];
-      radii: number[];
-      colors: number[];
-      opacities: number[];
-      rotations: number[];
-      shapes: number[];
-    } = {
-      positions: [],
-      radii: [],
-      colors: [],
-      opacities: [],
-      rotations: [],
-      shapes: [],
-    };
-
-    // Build instance data
+    // Group entities by texture type
+    const entityGroups = new Map<string, Array<[string, Position, Renderable]>>();
+    
     for (const [entityId, position, renderable] of entities) {
-      // Check opacity (explosions)
-      let opacity = 1;
-      for (const [expId, explosion] of explosions) {
-        if (expId === entityId) {
-          opacity = explosion.getOpacity();
-          break;
-        }
+      const groupKey = renderable.shape === "sprite" ? renderable.textureName || "none" : "circle";
+      if (!entityGroups.has(groupKey)) {
+        entityGroups.set(groupKey, []);
       }
-
-      // Check rotation (ships)
-      let rotation = 0;
-      for (const [shipId, ship] of shipEntities) {
-        if (shipId === entityId) {
-          rotation = ship.rotation;
-          break;
-        }
-      }
-
-      instanceData.positions.push(position.x, position.y);
-      instanceData.radii.push(renderable.radius);
-
-      // Parse color
-      const color = this.parseColor(renderable.color);
-      instanceData.colors.push(color[0], color[1], color[2]);
-      instanceData.opacities.push(opacity);
-      instanceData.rotations.push(rotation);
-      
-      // Map shape to numeric value: circle = 0, sprite = 1
-      const shapeValue = renderable.shape === "sprite" ? 1 : 0;
-      instanceData.shapes.push(shapeValue);
+      entityGroups.get(groupKey)!.push([entityId, position, renderable]);
     }
 
-    const instanceCount = instanceData.positions.length / 2;
+    gl.useProgram(this.program);
+    gl.uniform2f(this.locations.resolution, canvas.width, canvas.height);
 
-    if (instanceCount > 0) {
-      gl.useProgram(this.program);
+    // Bind quad vertices (shared across all draws)
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
+    gl.enableVertexAttribArray(this.locations.position);
+    gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
 
-      // Set uniforms
-      gl.uniform2f(this.locations.resolution, canvas.width, canvas.height);
+    // Render each group with its appropriate texture
+    for (const [groupKey, groupEntities] of entityGroups) {
+      if (groupEntities.length === 0) continue;
 
-      // Bind player texture
-      const playerTexture = this.textures.get("player");
-      if (playerTexture) {
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, playerTexture);
-        gl.uniform1i(this.locations.texture, 0);
+      // Bind texture if this is a sprite group
+      if (groupKey !== "circle") {
+        const texture = this.textures.get(groupKey);
+        if (texture) {
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.uniform1i(this.locations.texture, 0);
+        }
       }
 
-      // Bind quad vertices
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
-      gl.enableVertexAttribArray(this.locations.position);
-      gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
+      // Build instance data for this group
+      const instanceData: {
+        positions: number[];
+        radii: number[];
+        colors: number[];
+        opacities: number[];
+        rotations: number[];
+        shapes: number[];
+      } = {
+        positions: [],
+        radii: [],
+        colors: [],
+        opacities: [],
+        rotations: [],
+        shapes: [],
+      };
+
+      for (const [entityId, position, renderable] of groupEntities) {
+        // Check opacity (explosions)
+        let opacity = 1;
+        for (const [expId, explosion] of explosions) {
+          if (expId === entityId) {
+            opacity = explosion.getOpacity();
+            break;
+          }
+        }
+
+        // Check rotation (ships)
+        let rotation = 0;
+        for (const [shipId, ship] of shipEntities) {
+          if (shipId === entityId) {
+            rotation = ship.rotation;
+            break;
+          }
+        }
+
+        instanceData.positions.push(position.x, position.y);
+        instanceData.radii.push(renderable.radius);
+
+        // Parse color
+        const color = this.parseColor(renderable.color);
+        instanceData.colors.push(color[0], color[1], color[2]);
+        instanceData.opacities.push(opacity);
+        instanceData.rotations.push(rotation);
+        
+        // Map shape to numeric value: circle = 0, sprite = 1
+        const shapeValue = renderable.shape === "sprite" ? 1 : 0;
+        instanceData.shapes.push(shapeValue);
+      }
+
+      const instanceCount = instanceData.positions.length / 2;
 
       // Bind instance data
       this.bindInstanceBuffer(
@@ -406,7 +421,7 @@ export class GPURenderer {
         1,
       );
 
-      // Draw instances
+      // Draw instances for this group
       if (this.ext) {
         this.ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, instanceCount);
       } else {

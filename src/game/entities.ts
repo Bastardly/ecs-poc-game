@@ -47,7 +47,7 @@ export function createEnemy(registry: Registry, x: number, y: number): string {
     new Position(x, y),
     new Velocity(0, 0), // Velocity will be set by enemy AI
     new Ship("enemy", 0),
-    new Renderable("circle", "#ff0000", ENEMY_RADIUS),
+    new Renderable("sprite", "#ffffff", ENEMY_RADIUS, "enemy"),
     new Health(ENEMY_HEALTH, ENEMY_HEALTH),
     new Enemy(ENEMY_SCORE_VALUE),
   ]);
