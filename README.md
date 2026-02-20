@@ -9,10 +9,9 @@
 - Use WSAD to move.
 - Use mouse to aim and shoot.
 
-# Screenshots
-<img width="1048" height="706" alt="image" src="https://github.com/user-attachments/assets/39ebb55c-9f81-4968-bf69-f9bd3091e324" />
+# Screenshot
+<img width="1402" height="1029" alt="image" src="https://github.com/user-attachments/assets/939cf489-6688-4d75-8e92-94a086d27faa" />
 
-<img width="1049" height="705" alt="image" src="https://github.com/user-attachments/assets/6ad6959a-b2d8-4443-88b6-a50469e48ef7" />
 
 
 
