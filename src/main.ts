@@ -156,6 +156,18 @@ define(
         this.inputState.keysPressed.delete(e.key);
       });
 
+      // Window resize
+      window.addEventListener("resize", () => {
+        if (this.canvas && this.gpuRenderer) {
+          this.canvas.width = window.innerWidth * 0.8;
+          this.canvas.height = window.innerHeight * 0.8;
+          this.gpuRenderer.updateCanvasSize(
+            this.canvas.width,
+            this.canvas.height,
+          );
+        }
+      });
+
       // Mouse events on canvas
       if (this.canvas) {
         this.canvas.addEventListener("mousemove", (e) => {

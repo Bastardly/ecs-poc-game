@@ -8,6 +8,7 @@ import {
   Explosion,
 } from "@app/esc/components";
 import { GameState } from "@app/game/types";
+import { BackgroundRenderer } from "./backgroundRenderer";
 
 // Vertex shader for instanced rendering
 const vertexShaderSource = `
@@ -148,6 +149,7 @@ export class GPURenderer {
   private overlayCanvas: HTMLCanvasElement;
   private overlayCtx: CanvasRenderingContext2D;
   private textures: Map<string, WebGLTexture>;
+  private backgroundRenderer: BackgroundRenderer;
 
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl", { alpha: false, antialias: true });
@@ -240,6 +242,13 @@ export class GPURenderer {
     this.textures = new Map();
     this.loadTexture("player", "/player.png");
     this.loadTexture("enemy", "/enemy.png");
+
+    // Initialize background renderer
+    this.backgroundRenderer = new BackgroundRenderer(
+      gl,
+      canvas.width,
+      canvas.height,
+    );
   }
 
   private loadTexture(name: string, url: string) {
@@ -292,6 +301,15 @@ export class GPURenderer {
     image.src = url;
   }
 
+  updateCanvasSize(width: number, height: number): void {
+    // Update overlay canvas size
+    this.overlayCanvas.width = width;
+    this.overlayCanvas.height = height;
+
+    // Update background renderer
+    this.backgroundRenderer.updateCanvasSize(width, height);
+  }
+
   render(registry: Registry, canvas: HTMLCanvasElement, gameState: GameState) {
     const gl = this.gl;
 
@@ -299,6 +317,9 @@ export class GPURenderer {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Render tiled background
+    this.backgroundRenderer.render();
 
     // Collect all renderable entities
     const entities = registry.queryWithIds(Position, Renderable);
