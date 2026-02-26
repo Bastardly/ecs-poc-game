@@ -251,7 +251,7 @@ export class GPURenderer {
     }
 
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    
+
     // Set a 1x1 white pixel as placeholder while loading
     gl.texImage2D(
       gl.TEXTURE_2D,
@@ -262,7 +262,7 @@ export class GPURenderer {
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      new Uint8Array([255, 255, 255, 255])
+      new Uint8Array([255, 255, 255, 255]),
     );
 
     this.textures.set(name, texture);
@@ -271,8 +271,15 @@ export class GPURenderer {
     const image = new Image();
     image.onload = () => {
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image,
+      );
+
       // Set texture parameters
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -299,10 +306,16 @@ export class GPURenderer {
     const shipEntities = registry.queryWithIds(Ship, Position);
 
     // Group entities by texture type
-    const entityGroups = new Map<string, Array<[string, Position, Renderable]>>();
-    
+    const entityGroups = new Map<
+      string,
+      Array<[string, Position, Renderable]>
+    >();
+
     for (const [entityId, position, renderable] of entities) {
-      const groupKey = renderable.shape === "sprite" ? renderable.textureName || "none" : "circle";
+      const groupKey =
+        renderable.shape === "sprite"
+          ? renderable.textureName || "none"
+          : "circle";
       if (!entityGroups.has(groupKey)) {
         entityGroups.set(groupKey, []);
       }
@@ -375,7 +388,7 @@ export class GPURenderer {
         instanceData.colors.push(color[0], color[1], color[2]);
         instanceData.opacities.push(opacity);
         instanceData.rotations.push(rotation);
-        
+
         // Map shape to numeric value: circle = 0, sprite = 1
         const shapeValue = renderable.shape === "sprite" ? 1 : 0;
         instanceData.shapes.push(shapeValue);
