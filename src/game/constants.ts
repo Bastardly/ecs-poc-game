@@ -4,6 +4,8 @@ export const BULLET_LIFESPAN = 2500; // milliseconds
 export const BULLET_COOLDOWN = 200; // milliseconds
 export const BULLET_DAMAGE = 50;
 
+export const SCROLL_SPEED = 5; // pixels per second (downward world scrolling)
+
 export const ENEMY_SPEED = 70; // pixels per second
 export const ENEMY_HEALTH = 100;
 export const ENEMY_SCORE_VALUE = 1;

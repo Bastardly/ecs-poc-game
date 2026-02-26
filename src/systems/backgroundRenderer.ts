@@ -5,10 +5,12 @@ const vertexShaderSource = `
   attribute vec2 a_position;
   varying vec2 v_texCoord;
   uniform vec2 u_tileRepeat;
+  uniform float u_scrollOffset;
   
   void main() {
     gl_Position = vec4(a_position, 0.0, 1.0);
-    v_texCoord = (vec2(a_position.x, -a_position.y) * 0.5 + 0.5) * u_tileRepeat;
+    vec2 baseCoord = (vec2(a_position.x, -a_position.y) * 0.5 + 0.5);
+    v_texCoord = (baseCoord + vec2(0.0, u_scrollOffset)) * u_tileRepeat;
   }
 `;
 
@@ -30,12 +32,14 @@ export class BackgroundRenderer {
     position: number;
     texture: WebGLUniformLocation | null;
     tileRepeat: WebGLUniformLocation | null;
+    scrollOffset: WebGLUniformLocation | null;
   };
   private quadBuffer: WebGLBuffer;
   private texture: WebGLTexture | null = null;
   private tileRepeatX: number = 1;
   private tileRepeatY: number = 1;
   private imageDimensions: { width: number; height: number } | null = null;
+  private scrollOffset: number = 0;
 
   constructor(
     gl: WebGLRenderingContext,
@@ -68,6 +72,7 @@ export class BackgroundRenderer {
       position: gl.getAttribLocation(program, "a_position"),
       texture: gl.getUniformLocation(program, "u_texture"),
       tileRepeat: gl.getUniformLocation(program, "u_tileRepeat"),
+      scrollOffset: gl.getUniformLocation(program, "u_scrollOffset"),
     };
 
     // Create fullscreen quad buffer
@@ -144,6 +149,17 @@ export class BackgroundRenderer {
     }
   }
 
+  public updateScroll(deltaTime: number, scrollSpeed: number): void {
+    // deltaTime is in milliseconds, scrollSpeed is pixels per second
+    // Convert to normalized offset (0 to 1) based on tile dimensions
+    if (this.imageDimensions) {
+      const pixelsScrolled = (scrollSpeed * deltaTime) / 1000;
+      const normalizedScroll = pixelsScrolled / this.imageDimensions.height;
+      this.scrollOffset += normalizedScroll;
+      this.scrollOffset = this.scrollOffset % 1.0; // Loop seamlessly with fract()
+    }
+  }
+
   public render(): void {
     if (!this.texture) return;
 
@@ -155,8 +171,9 @@ export class BackgroundRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(this.locations.texture, 0);
 
-    // Set tile repeat uniform
+    // Set uniforms
     gl.uniform2f(this.locations.tileRepeat, this.tileRepeatX, this.tileRepeatY);
+    gl.uniform1f(this.locations.scrollOffset, this.scrollOffset);
 
     // Bind quad buffer and draw
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);

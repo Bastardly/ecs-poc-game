@@ -21,6 +21,7 @@ import {
   ENEMY_RADIUS,
   ENEMY_HEALTH,
   ENEMY_SCORE_VALUE,
+  SCROLL_SPEED,
 } from "./constants";
 
 let entityCounter = 0;
@@ -63,7 +64,7 @@ export function createBullet(
 ): string {
   const id = generateEntityId();
   const vx = Math.cos(angle) * BULLET_SPEED;
-  const vy = Math.sin(angle) * BULLET_SPEED;
+  const vy = Math.sin(angle) * BULLET_SPEED + SCROLL_SPEED;
 
   registry.addComponents(id, [
     new Position(x, y),

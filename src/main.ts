@@ -3,6 +3,7 @@ import { Registry } from "@app/esc/registry";
 import { Ship, Position } from "@app/esc/components";
 import { GameState, InputState } from "@app/game/types";
 import { createPlayer } from "@app/game/entities";
+import { SCROLL_SPEED } from "@app/game/constants";
 import { inputSystem } from "@app/systems/input";
 import { shootingSystem } from "@app/systems/shooting";
 import { movementSystem } from "@app/systems/movement";
@@ -12,6 +13,7 @@ import { enemySpawnSystem } from "@app/systems/enemySpawner";
 import { enemyAISystem } from "@app/systems/enemyAI";
 import { damageIndicatorSystem } from "@app/systems/damageIndicator";
 import { explosionSystem } from "@app/systems/explosion";
+import { wraparoundSystem } from "@app/systems/wraparound";
 import { createGPURenderer, GPURenderer } from "@app/systems/renderGPU";
 import { getGameOverOverlay, getFpsCounter } from "@app/ui-game-overlay";
 import "@app/shaderfun2";
@@ -78,6 +80,7 @@ define(
         shootingSystem(this.registry, this.inputState, timestamp);
         enemyAISystem(this.registry);
         movementSystem(this.registry, deltaTime);
+        wraparoundSystem(this.registry, this.canvas.width, this.canvas.height);
         collisionSystem(this.registry, this.gameState);
         lifespanSystem(this.registry, deltaTime);
         damageIndicatorSystem(this.registry, deltaTime);
@@ -89,9 +92,6 @@ define(
           this.canvas.width,
           this.canvas.height,
         );
-
-        // Keep player within canvas bounds
-        this.#clampPlayerPosition();
       } else {
         // Show game over overlay and update score
         if (this.gameOverOverlay) {
@@ -102,6 +102,11 @@ define(
             scoreElement.textContent = `Final Score: ${this.gameState.score}`;
           }
         }
+      }
+
+      // Update background scroll
+      if (this.gpuRenderer) {
+        this.gpuRenderer.updateBackgroundScroll(deltaTime, SCROLL_SPEED);
       }
 
       // Render
@@ -122,25 +127,6 @@ define(
           // Negate dy because canvas Y increases downward but WebGL Y increases upward
           // Add π/2 offset because sprite is facing down (6 o'clock) instead of right (3 o'clock)
           ship.rotation = Math.atan2(-dy, dx) + Math.PI / 2;
-          break;
-        }
-      }
-    }
-
-    #clampPlayerPosition() {
-      if (!this.canvas) return;
-
-      const players = this.registry.queryWithIds(Ship, Position);
-      for (const [id, ship, position] of players) {
-        if (ship.type === "player") {
-          position.x = Math.max(
-            15,
-            Math.min(this.canvas.width - 15, position.x),
-          );
-          position.y = Math.max(
-            15,
-            Math.min(this.canvas.height - 15, position.y),
-          );
           break;
         }
       }

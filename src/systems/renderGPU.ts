@@ -270,6 +270,10 @@ export class GPURenderer {
     this.backgroundRenderer.updateCanvasSize(width, height);
   }
 
+  updateBackgroundScroll(deltaTime: number, scrollSpeed: number): void {
+    this.backgroundRenderer.updateScroll(deltaTime, scrollSpeed);
+  }
+
   render(registry: Registry, canvas: HTMLCanvasElement, gameState: GameState) {
     const gl = this.gl;
 

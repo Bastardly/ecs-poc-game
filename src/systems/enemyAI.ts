@@ -1,6 +1,6 @@
 import { Registry } from "@app/esc/registry";
 import { Position, Velocity, Ship, Enemy } from "@app/esc/components";
-import { ENEMY_SPEED } from "@app/game/constants";
+import { ENEMY_SPEED, SCROLL_SPEED } from "@app/game/constants";
 
 export function enemyAISystem(registry: Registry) {
   // Find player position
@@ -25,10 +25,10 @@ export function enemyAISystem(registry: Registry) {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > 0) {
-      // Normalize and apply speed
+      // Normalize and apply speed (no scroll - enemies stay in screen space)
       enemyVel.dx = (dx / distance) * ENEMY_SPEED;
       enemyVel.dy = (dy / distance) * ENEMY_SPEED;
-      
+
       // Set rotation to face player
       // Negate dy for coordinate system, add π/2 for sprite facing down
       ship.rotation = Math.atan2(-dy, dx) + Math.PI / 2;

@@ -1,6 +1,6 @@
 import { Registry } from "@app/esc/registry";
 import { Ship, Velocity } from "@app/esc/components";
-import { PLAYER_SPEED } from "@app/game/constants";
+import { PLAYER_SPEED, SCROLL_SPEED } from "@app/game/constants";
 import { InputState } from "@app/game/types";
 
 export function inputSystem(registry: Registry, inputState: InputState) {
@@ -34,7 +34,7 @@ export function inputSystem(registry: Registry, inputState: InputState) {
       vy /= magnitude;
     }
 
-    // Apply speed
+    // Apply speed (no scroll - player stays in screen space while background scrolls)
     velocity.dx = vx * PLAYER_SPEED;
     velocity.dy = vy * PLAYER_SPEED;
   }

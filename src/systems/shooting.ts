@@ -1,6 +1,6 @@
 import { Registry } from "@app/esc/registry";
 import { Ship, Position } from "@app/esc/components";
-import { BULLET_COOLDOWN } from "@app/game/constants";
+import { BULLET_COOLDOWN, SCROLL_SPEED } from "@app/game/constants";
 import { InputState } from "@app/game/types";
 import { createBullet } from "@app/game/entities";
 
@@ -21,7 +21,9 @@ export function shootingSystem(
 
     // Calculate angle from player to mouse
     const dx = inputState.mousePos.x - position.x;
-    const dy = inputState.mousePos.y - position.y;
+    const dy =
+      inputState.mousePos.y -
+      position.y;
     const angle = Math.atan2(dy, dx);
 
     // Create bullet at player position with calculated angle
