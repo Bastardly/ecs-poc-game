@@ -9,6 +9,7 @@ import {
 } from "@app/esc/components";
 import { GameState } from "@app/game/types";
 import { BackgroundRenderer } from "./backgroundRenderer";
+import { createShader, createProgram } from "./webglUtils";
 
 // Vertex shader for instanced rendering
 const vertexShaderSource = `
@@ -82,47 +83,6 @@ const fragmentShaderSource = `
     }
   }
 `;
-
-function createShader(
-  gl: WebGLRenderingContext,
-  type: number,
-  source: string,
-): WebGLShader | null {
-  const shader = gl.createShader(type);
-  if (!shader) return null;
-
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error("Shader compile error:", gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
-
-function createProgram(
-  gl: WebGLRenderingContext,
-  vertexShader: WebGLShader,
-  fragmentShader: WebGLShader,
-): WebGLProgram | null {
-  const program = gl.createProgram();
-  if (!program) return null;
-
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error("Program link error:", gl.getProgramInfoLog(program));
-    gl.deleteProgram(program);
-    return null;
-  }
-
-  return program;
-}
 
 export class GPURenderer {
   private gl: WebGLRenderingContext;
