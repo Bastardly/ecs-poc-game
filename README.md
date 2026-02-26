@@ -13,7 +13,8 @@ It's a very simple Asteroids-like game.
 - Use mouse to aim and shoot.
 
 # Screenshot
-<img width="1402" height="1029" alt="image" src="https://github.com/user-attachments/assets/939cf489-6688-4d75-8e92-94a086d27faa" />
+<img width="2308" height="1140" alt="image" src="https://github.com/user-attachments/assets/ac8ecbab-5d58-4447-a2a5-91a8781b7a24" />
+
 
 
 
